@@ -1,0 +1,26 @@
+Hi Wei,
+
+The following changes in green should help to keep Max Payload size to stay at 128. Please try it to see if it helps when you have a chance tomorrow.  Thanks.
+
+File: ntb_user_borrower.c
+Function: pci_write_vdevs()
+
+        case 2:
+        {
+            u16 * pWord = (u16 *) (pData + where);
+            orig_data = (u32) *pWord;
+            /* Try to ask lender to update pciCfgBug and write to device instead. */
+            // *pWord = (u16) val;
+            // KW_DB_20250723->
+            // Tries to keep PCIe Max_Payload_Size at 128 bytes MPS
+            if (where == 0x78)
+            {
+                u16 origPayloadEnc = cmd.fields.data & 0x00E0;
+                u16 origPayloadEnc >= 5;
+                cmd.fields.data &= 0xFF1F;
+                printk(KERN_INFO "%s(): Orig MaxPayloadEnc=0x%X , new_val=0x%X. (Ln %d) \n", __func__, origPayloadEnc, cmd.fields.data, __LINE__);
+            }
+            // KW_DB_20250723<-
+            borrower_cmd_send(peer, PERF_CMD_CFG_WR, cmd.qword);
+            break;
+        }
